@@ -11,6 +11,17 @@
   networking.networkmanager.enable = true;
   networking.firewall.enable = false;
 
+  networking.nat.enable = true;
+  networking.nat.internalInterfaces = [ "ve-+" ];
+  networking.nat.externalInterface = "eth0";
+  networking.networkmanager.unmanaged = [ "interface-name:ve-*" ];
+
+  virtualisation.docker = {
+    enable = true;
+    autoPrune.enable = true;
+    autoPrune.dates = "monthly";
+  };
+
   time.timeZone = "Africa/Nairobi";
   i18n.defaultLocale = "en_US.UTF-8";
 
@@ -25,13 +36,18 @@
   hardware.bluetooth.enable = true;
   hardware.opentabletdriver.enable = true;
 
+  programs.light = { enable = true; };
+
   services.xserver = {
     enable = true;
-    xkb.layout = "us";
-    xkb.variant = "colemak";
-    xkb.options = "ctrl:swapcaps";
+    xkb = {
+      layout = "us";
+      variant = "colemak";
+      options = "caps:capslock";
+    };
+
     displayManager.lightdm = {
-      background = /home/nate/misc/pictures/basquiat-wall.png;
+      background = ../assets/wallpapers/basquiat-wall.png;
       enable = true;
     };
     windowManager.bspwm.enable = true;
@@ -41,6 +57,16 @@
 
   };
 
+  services.interception-tools = {
+    enable = true;
+    plugins = [ pkgs.interception-tools-plugins.caps2esc ];
+    udevmonConfig = ''
+      - JOB: ${pkgs.interception-tools}/bin/intercept -g $DEVNODE | ${pkgs.interception-tools-plugins.caps2esc}/bin/caps2esc | ${pkgs.interception-tools}/bin/uinput -d $DEVNODE
+        DEVICE:
+          EVENTS:
+          EV_KEY: [KEY_CAPSLOCK, KEY_ESC]
+    '';
+  };
   services.unclutter-xfixes = { enable = true; };
 
   services.pipewire = {
@@ -81,13 +107,11 @@
   users.users.nate = {
     isNormalUser = true;
     initialPassword = "nate";
-    extraGroups = [ "wheel" "networkmanager" "video" "netdev" ];
+    extraGroups = [ "wheel" "networkmanager" "video" "netdev" "docker" ];
     packages = [
       pkgs.firefox
       pkgs.telegram-desktop
 
-      pkgs.tree-sitter
-      pkgs.tree-sitter-grammars.tree-sitter-rust
       pkgs.gcc
 
       pkgs.nixfmt-classic
@@ -101,6 +125,9 @@
       pkgs.unzip
       pkgs.mupdf
 
+      pkgs.pandoc
+      #      pkgs.texlive
+
       pkgs.opentabletdriver
 
       pkgs.sxiv
@@ -113,7 +140,26 @@
       pkgs.ghc
       pkgs.arandr
 
+      pkgs.rtorrent
+
       pkgs.reaper
+
+      pkgs.vlc
+
+      pkgs.k3d
+      pkgs.kubectl
+      pkgs.kubernetes-helm
+      pkgs.kubernetes-helmPlugins.helm-diff
+      pkgs.helmfile-wrapped
+
+      pkgs.babashka-unwrapped # without rlwrap
+
+      pkgs.ispell
+
+      pkgs.inetutils
+
+      pkgs.jq
+      pkgs.xh
 
       (pkgs.callPackage ../pkgs/gauth.nix { })
     ];
@@ -121,7 +167,6 @@
 
   environment.systemPackages = with pkgs; [
     emacs
-    light
     curl
     ripgrep
     fd
@@ -143,6 +188,7 @@
     terminus-nerdfont
     fantasque-sans-mono
     google-fonts
+    libre-baskerville
   ];
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];

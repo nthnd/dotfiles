@@ -1,7 +1,12 @@
 { config, ... }:
 
 {
-  programs.bash.enable = true;
+  programs.bash = {
+    enable = true;
+    shellAliases = {
+      keeber = "xinput list | rg AT | cut -d= -ft | awk '{ print $1}' | xargs -I {} ";
+    };
+  };
   programs.starship.enable = true;
   programs.zoxide.enable = true;
   programs.eza.enable = true;
@@ -85,6 +90,14 @@
         bspc node -t ~fullscreen
       '';
 
+      "super + t" = ''
+        bspc node -t ~tiled
+      '';
+
+      "super + shift + f" = ''
+        bspc node -t ~floating
+      '';
+
       "super + y" = ''
         flameshot gui
       '';
@@ -92,6 +105,15 @@
       "super + space" = ''
         rofi -show run
       '';
+
+      "{XF86AudioRaiseVolume,XF86AudioLowerVolume}" = ''
+        wpctl set-volume @DEFAULT_SINK@ .1{+,-}
+      '';
+
+      "XF86AudioMute" = ''
+        wpctl set-mute @DEFAULT_SINK@ toggle
+      '';
+
 
     };
   };
